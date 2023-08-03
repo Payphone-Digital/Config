@@ -28,7 +28,3 @@ func MongoConnectDB() *mongo.Client {
 	return client
 
 }
-
-func MgoCollection(coll string, client *mongo.Client) *mongo.Collection {
-	return client.Database("products").Collection(coll)
-}
