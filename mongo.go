@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func MongoConnectDB(db string, coll string) (*mongo.Collection, error) {
+func MongoConnectDB(db string, coll string) (*mongo.Collection, *mongo.Client, error) {
 	// Use the SetServerAPIOptions() method to set the Stable API version to 1
 	fmt.Println(os.Getenv("DB_SERVER") + "://" + os.Getenv("DB_USERNAME") + ":" + os.Getenv("DB_PASSWORD") + "@" + os.Getenv("DB_HOST"))
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
@@ -21,7 +21,7 @@ func MongoConnectDB(db string, coll string) (*mongo.Collection, error) {
 	defer cancel()
 	// Create a new client and connect to the server
 	client, err := mongo.Connect(ctx, opts)
-	client.Disconnect(ctx)
+	client.Disconnect(context.Background())
 
-	return client.Database(db).Collection(coll), err
+	return client.Database(db).Collection(coll), client, err
 }
