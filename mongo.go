@@ -21,7 +21,6 @@ func MongoConnectDB(db string, coll string) (*mongo.Collection, error) {
 	defer cancel()
 	// Create a new client and connect to the server
 	client, err := mongo.Connect(ctx, opts)
-	client.Disconnect(context.Background())
 
 	return client.Database(db).Collection(coll), err
 }
