@@ -19,13 +19,13 @@ var (
 	clientMutex     sync.Mutex
 )
 
-func MongoConnectDB(db string, coll string) (*mongo.Collection, *mongo.Client, error) {
+func MongoConnectDB(db string, coll string) (*mongo.Collection, error) {
 	clientMutex.Lock()
 	defer clientMutex.Unlock()
 
 	// Mencoba mengambil koleksi dari cache
 	if coll, ok := collectionCache[coll]; ok {
-		return coll, client, nil
+		return coll, nil
 	}
 
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
@@ -41,7 +41,7 @@ func MongoConnectDB(db string, coll string) (*mongo.Collection, *mongo.Client, e
 		var err error
 		client, err = mongo.Connect(ctx, opts)
 		if err != nil {
-			return nil, client, err
+			return nil, err
 		}
 
 		// Menambahkan goroutine untuk menangani sinyal shutdown
@@ -62,10 +62,10 @@ func MongoConnectDB(db string, coll string) (*mongo.Collection, *mongo.Client, e
 	if err != nil {
 		client.Disconnect(context.Background())
 		client = nil
-		return nil, nil, err
+		return nil, err
 	}
 
-	return GetCollection(db, coll), client, nil
+	return GetCollection(db, coll), nil
 }
 
 func GetCollection(db string, collName string) *mongo.Collection {
