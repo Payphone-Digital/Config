@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -19,7 +20,7 @@ var (
 	clientMutex     sync.Mutex
 )
 
-func MongoConnectDB(db string, coll string) (*mongo.Collection, error) {
+func MongoConnectDB(db, coll string) (*mongo.Collection, error) {
 	clientMutex.Lock()
 	defer clientMutex.Unlock()
 
@@ -68,7 +69,7 @@ func MongoConnectDB(db string, coll string) (*mongo.Collection, error) {
 	return GetCollection(db, coll), nil
 }
 
-func GetCollection(db string, collName string) *mongo.Collection {
+func GetCollection(db, collName string) *mongo.Collection {
 	cacheMutex.Lock()
 	defer cacheMutex.Unlock()
 
@@ -79,4 +80,11 @@ func GetCollection(db string, collName string) *mongo.Collection {
 	coll := client.Database(db).Collection(collName)
 	collectionCache[collName] = coll
 	return coll
+}
+
+func DbPointing(url, ds, cn string) (*mongo.Collection, string, error) {
+	idDb := strings.Split(url, "/")
+	colls := strings.Title(idDb[3]) + cn
+	db, err := MongoConnectDB(strings.Title(idDb[2])+ds, colls)
+	return db, colls, err
 }
