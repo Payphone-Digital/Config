@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -20,18 +19,27 @@ var (
 	clientMutex     sync.Mutex
 )
 
-func MongoConnectDB(db, coll string) (*mongo.Collection, error) {
+type MongoConfig struct {
+	Server   string
+	Host     string
+	Username string
+	Password string
+	DB       string
+	Coll     string
+}
+
+func MongoConnectDB(cnf MongoConfig) (*mongo.Collection, error) {
 	clientMutex.Lock()
 	defer clientMutex.Unlock()
 
 	// Mencoba mengambil koleksi dari cache
-	if coll, ok := collectionCache[coll]; ok {
+	if coll, ok := collectionCache[cnf.Coll]; ok {
 		return coll, nil
 	}
 
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().
-		ApplyURI(os.Getenv("DB_SERVER") + "://" + os.Getenv("DB_USERNAME") + ":" + os.Getenv("DB_PASSWORD") + "@" + os.Getenv("DB_HOST") + "/?retryWrites=true&w=majority").
+		ApplyURI(cnf.Server + "://" + cnf.Username + ":" + cnf.Password + "@" + cnf.Host + "/?retryWrites=true&w=majority").
 		SetServerAPIOptions(serverAPI).SetMinPoolSize(5).
 		SetMaxPoolSize(100) // Atur ukuran maksimum dari connection pool
 
@@ -66,7 +74,7 @@ func MongoConnectDB(db, coll string) (*mongo.Collection, error) {
 		return nil, err
 	}
 
-	return GetCollection(db, coll), nil
+	return GetCollection(cnf.DB, cnf.Coll), nil
 }
 
 func GetCollection(db, collName string) *mongo.Collection {
@@ -82,9 +90,9 @@ func GetCollection(db, collName string) *mongo.Collection {
 	return coll
 }
 
-func DbPointing(url, ds, cn string) (*mongo.Collection, string, error) {
-	idDb := strings.Split(url, "/")
-	colls := strings.Title(idDb[3]) + cn
-	db, err := MongoConnectDB(strings.Title(idDb[2])+ds, colls)
-	return db, colls, err
-}
+// func DbPointing(url, ds, cn string) (*mongo.Collection, string, error) {
+// 	idDb := strings.Split(url, "/")
+// 	colls := strings.Title(idDb[3]) + cn
+// 	db, err := MongoConnectDB(strings.Title(idDb[2])+ds, colls)
+// 	return db, colls, err
+// }
